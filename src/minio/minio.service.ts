@@ -29,14 +29,47 @@ export class MinioService {
     }
   }
 
-  async uploadFile(file: Express.Multer.File): Promise<string> {
+  async uploadFile(files: Express.Multer.File | Express.Multer.File[]): Promise<string[]> {
     const bucket = minioConfig.bucketName;
-    const objectName = `${Date.now()}-${file.originalname}`;
-
-    const stream = Readable.from(file.buffer);
-    await this.minioClient.putObject(bucket, objectName, stream, file.size);
-    this.logger.log(`File '${objectName}' uploaded successfully.`);
-
-    return `${minioConfig.endPoint}:${minioConfig.port}/${bucket}/${objectName}`;
+    const fileUrls: string[] = [];
+  
+    const filesArray = Array.isArray(files) ? files : [files];
+  
+    console.log('Received files:', filesArray);
+  
+    await Promise.all(
+      filesArray.map(async (file) => {
+        console.log('File:', file);
+                if (!file || !file.buffer) {
+          this.logger.error('Fichier ou buffer manquant pour le téléchargement');
+          throw new Error('Fichier ou buffer manquant');
+        }
+  
+        console.log('File details:', file);
+        
+        this.logger.log(`Uploading file: ${file.originalname}`);
+        const objectName = `${Date.now()}-${file.originalname}`;
+        const stream = Readable.from(file.buffer);
+  
+        try {
+          await this.minioClient.putObject(bucket, objectName, stream, file.size);
+          this.logger.log(`File '${objectName}' uploaded successfully.`);
+  
+          const protocol = minioConfig.useSSL ? 'https' : 'http';
+          const fileUrl = `${protocol}://${minioConfig.endPoint}:${minioConfig.port}/${bucket}/${objectName}`;
+          fileUrls.push(fileUrl);
+        } catch (error) {
+          this.logger.error(`Error uploading file: ${objectName}`, error.stack);
+          throw new Error(`Failed to upload file: ${objectName}`);
+        }
+      })
+    );
+  
+    return fileUrls;
   }
+  
+  
+  
+  
 }
+

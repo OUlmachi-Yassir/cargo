@@ -14,8 +14,10 @@ export class CarService {
 
   async createCar(dto: CarDto, entrepriseId: string,  images: Express.Multer.File[]): Promise<Car> {
     console.log(dto)
-    const imageUrls = await Promise.all(images.map((file) => this.minioService.uploadFile(file)));
-    const newCar = new this.carModel({
+    const imagesArray = Array.isArray(images) ? images : [images];
+  
+    const imageUrls = await Promise.all(imagesArray.map((file) => this.minioService.uploadFile(file)));
+        const newCar = new this.carModel({
       marque: dto.marque,
       modele: dto.modele,
       images: imageUrls,

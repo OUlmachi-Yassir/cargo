@@ -4,7 +4,7 @@ import { JwtAuthGuard } from 'src/Middleware/auth/jwt-auth.guard';
 import { CarDto } from './DTO/car.dto';
 import { Car } from './model/car.model';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import * as multer from 'multer';
 
 
 @Controller('cars')
@@ -15,13 +15,8 @@ export class CarController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FilesInterceptor('images', 5, {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, `${file.originalname.replace(/\s/g, '_')}-${uniqueSuffix}`);
-        },
-      }),
+      storage: multer.memoryStorage(),  
+
       fileFilter: (req, file, cb) => {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
         if (!allowedTypes.includes(file.mimetype)) {
@@ -32,20 +27,24 @@ export class CarController {
       limits: { fileSize: 5 * 1024 * 1024 },
     }),
   )
-   
   async createCar(
     @Request() req,
     @Body() dto: CarDto,
-    @UploadedFiles() images: Express.Multer.File[]
+    @UploadedFiles() images: Express.Multer.File[],
   ): Promise<Car> {
-    console.log('DTO:', dto); 
     console.log('Images:', images); 
+    if (!images || images.length === 0) {
+      throw new Error('Aucune image téléchargée.');
+    }
   
     if (req.user.role !== 'company') {
       throw new UnauthorizedException('Seules les entreprises peuvent ajouter des voitures.');
     }
-    return this.carService.createCar(dto, req.user.id, images);
+  
+    const uploadedImageUrls = await this.carService.createCar(dto, req.user.id, images);
+    return uploadedImageUrls;
   }
+  
 
   @Get()
   async getAllCars(): Promise<Car[]> {
