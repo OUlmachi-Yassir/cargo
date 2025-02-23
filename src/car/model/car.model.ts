@@ -3,13 +3,13 @@ import { Document } from 'mongoose';
 
 @Schema()
 export class Car extends Document {
-  @Prop({ required: true })
+  @Prop()
   marque: string;
 
-  @Prop({ required: true })
+  @Prop()
   modele: string;
 
-  @Prop({ required: true })
+  @Prop()
   images: string[]; 
 
   @Prop({ required: true, enum: ['non réservé', 'réservé', 'en panne'], default: 'non réservé' })

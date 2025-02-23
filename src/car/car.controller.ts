@@ -1,8 +1,10 @@
-import { Controller, Post, Get, Put, Delete, Body, Param, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Get, Put, Delete, Body, Param, UseGuards, Request, UnauthorizedException, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { CarService } from './car.service';
 import { JwtAuthGuard } from 'src/Middleware/auth/jwt-auth.guard';
 import { CarDto } from './DTO/car.dto';
 import { Car } from './model/car.model';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 
 
 @Controller('cars')
@@ -11,12 +13,38 @@ export class CarController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async createCar(@Request() req, @Body() dto: CarDto): Promise<Car> {
-    console.log(req.user.role)
+  @UseInterceptors(
+    FilesInterceptor('images', 5, {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${file.originalname.replace(/\s/g, '_')}-${uniqueSuffix}`);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!allowedTypes.includes(file.mimetype)) {
+          return cb(new Error('Only image files are allowed'), false);
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+   
+  async createCar(
+    @Request() req,
+    @Body() dto: CarDto,
+    @UploadedFiles() images: Express.Multer.File[]
+  ): Promise<Car> {
+    console.log('DTO:', dto); 
+    console.log('Images:', images); 
+  
     if (req.user.role !== 'company') {
       throw new UnauthorizedException('Seules les entreprises peuvent ajouter des voitures.');
     }
-    return this.carService.createCar(dto, req.user.id);
+    return this.carService.createCar(dto, req.user.id, images);
   }
 
   @Get()
