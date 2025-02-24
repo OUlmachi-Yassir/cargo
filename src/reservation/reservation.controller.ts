@@ -1,34 +1,45 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { ReservationService } from './reservation.service';
-import { CreateReservationDto } from './dto/create-reservation.dto';
-import { UpdateReservationDto } from './dto/update-reservation.dto';
+import { ReservationDto } from './dto/reservation.dto';
+import { JwtAuthGuard } from 'src/Middleware/auth/jwt-auth.guard';
 
-@Controller('reservation')
+@Controller('reservations')
 export class ReservationController {
   constructor(private readonly reservationService: ReservationService) {}
 
+  // Create a reservation request
   @Post()
-  create(@Body() createReservationDto: CreateReservationDto) {
-    return this.reservationService.create(createReservationDto);
+  @UseGuards(JwtAuthGuard)
+  async createReservation(@Request() req, @Body() dto: ReservationDto) {
+    dto.userId = req.user.id;
+    return this.reservationService.createReservation(dto,req.user.id);
   }
 
+  // Approve a reservation
+  @Put(':id/approve')
+  @UseGuards(JwtAuthGuard)
+  async approveReservation(@Param('id') id: string) {
+    return this.reservationService.approveReservation(id);
+  }
+
+  // Reject a reservation
+  @Put(':id/reject')
+  @UseGuards(JwtAuthGuard)
+  async rejectReservation(@Param('id') id: string) {
+    return this.reservationService.rejectReservation(id);
+  }
+
+  // Get all reservations
   @Get()
-  findAll() {
-    return this.reservationService.findAll();
+  @UseGuards(JwtAuthGuard)
+  async getAllReservations() {
+    return this.reservationService.getAllReservations();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.reservationService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateReservationDto: UpdateReservationDto) {
-    return this.reservationService.update(+id, updateReservationDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.reservationService.remove(+id);
+  // Get user reservations
+  @Get('user/:userId')
+  @UseGuards(JwtAuthGuard)
+  async getReservationsByUser(@Param('userId') userId: string) {
+    return this.reservationService.getReservationsByUser(userId);
   }
 }
