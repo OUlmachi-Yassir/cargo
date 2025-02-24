@@ -4,6 +4,8 @@ import { Model } from 'mongoose';
 import { Reservation } from './model/reservation.model';
 import { ReservationDto } from './dto/reservation.dto';
 import { Car } from 'src/car/model/car.model';
+import * as moment from 'moment';
+
 
 @Injectable()
 export class ReservationService {
@@ -20,9 +22,15 @@ export class ReservationService {
       throw new BadRequestException('Cette voiture est déjà réservée ou en panne.');
     }
 
+    if (new Date(dto.startDate) >= new Date(dto.endDate)) {
+      throw new BadRequestException('La date de début doit être antérieure à la date de fin.');
+    }
+
     const reservation = new this.reservationModel({
       carId: dto.carId,
       userId: userId,
+      startDate: dto.startDate,
+      endDate: dto.endDate,
       statut: 'en attente',
     });
 
@@ -60,5 +68,22 @@ export class ReservationService {
 
   async getReservationsByUser(userId: string): Promise<Reservation[]> {
     return this.reservationModel.find({ userId }).exec();
+  }
+
+  private async scheduleReservationEnd(endDate: Date, carId: string) {
+    const now = moment();
+    const end = moment(endDate);
+    const delay = end.diff(now);
+
+    if (delay > 0) {
+      setTimeout(async () => {
+        const car = await this.carModel.findById(carId);
+        if (car && car.statut === 'réservé') {
+          car.statut = 'non réservé';
+          await car.save();
+          console.log(`La réservation pour la voiture ${carId} a expiré.`);
+        }
+      }, delay);
+    }
   }
 }
