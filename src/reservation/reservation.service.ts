@@ -5,6 +5,7 @@ import { Reservation } from './model/reservation.model';
 import { ReservationDto } from './dto/reservation.dto';
 import { Car } from 'src/car/model/car.model';
 import * as moment from 'moment';
+import { NotificationGateway } from 'src/notification/notification.gateway';
 
 
 @Injectable()
@@ -12,6 +13,8 @@ export class ReservationService {
   constructor(
     @InjectModel(Reservation.name) private reservationModel: Model<Reservation>,
     @InjectModel(Car.name) private carModel: Model<Car>,
+    private notificationGateway: NotificationGateway,
+
   ) {}
 
   async createReservation(dto: ReservationDto,userId:string): Promise<Reservation> {
@@ -50,6 +53,12 @@ export class ReservationService {
 
     car.statut = 'réservé';
     await car.save();
+    
+    this.notificationGateway.sendNotification(
+      reservation.userId,
+      `Votre réservation pour la voiture ${car._id} a été approuvée.`,
+    );
+
 
     return reservation;
   }
