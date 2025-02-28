@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './model/user.model';
+import { UpdateLocationDto } from './dto/locationDto';
 
 @Injectable()
 export class UserService {
@@ -27,6 +28,14 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
     return updatedUser;
+  }
+
+  async updateLocation(id: string, updateLocationDto: UpdateLocationDto): Promise<User|null> {
+    return this.userModel.findByIdAndUpdate(
+      id,
+      { location: updateLocationDto },
+      { new: true },
+    );
   }
 
   async remove(id: string): Promise<{ message: string }> {
