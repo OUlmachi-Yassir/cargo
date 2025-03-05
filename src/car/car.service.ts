@@ -20,7 +20,7 @@ export class CarService {
         const newCar = new this.carModel({
       marque: dto.marque,
       modele: dto.modele,
-      images: imageUrls,
+      images: imageUrls.flat(),
       statut: dto.statut || 'non réservé',
       entrepriseId: entrepriseId,
     });;

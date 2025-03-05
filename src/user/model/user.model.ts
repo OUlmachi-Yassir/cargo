@@ -32,6 +32,9 @@ export class User extends Document {
   @Prop({ required: false, unique: true })
   ice?: string;
 
+  @Prop({ type: [String], required: false })
+  images?: string[];
+
   @Prop({ required: true, enum: ['user', 'company'], default: 'user' })
   role: string;
 
