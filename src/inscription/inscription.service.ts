@@ -9,11 +9,11 @@ import { User } from 'src/user/model/user.model';
 import { LoginDto, RegisterDto } from './DTO/auth.dto';
 
 @Injectable()
+@Injectable()
 export class InscriptionService {
-  private validIces: string[];
+  private validIces: { ice: string; latitude: number; longitude: number }[];
 
   constructor(@InjectModel(User.name) private userModel: Model<User>) {
-
     const data = fs.readFileSync('ice.json', 'utf-8');
     this.validIces = JSON.parse(data).valid_ices;
   }
@@ -25,12 +25,14 @@ export class InscriptionService {
     }
 
     let role = 'user';
-
+    let location: { latitude: number; longitude: number } | null = null;
     if (dto.ice) {
-      if (!this.validIces.includes(dto.ice)) {
+      const iceEntry = this.validIces.find(entry => entry.ice === dto.ice);
+      if (!iceEntry) {
         throw new BadRequestException('ICE invalide ou non trouvé.');
       }
       role = 'company';
+      location = { latitude: iceEntry.latitude, longitude: iceEntry.longitude };
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -39,12 +41,14 @@ export class InscriptionService {
       name: dto.name,
       email: dto.email,
       password: hashedPassword,
-      ice: dto.ice,
       role,
+      ...(dto.ice ? { ice: dto.ice } : {}), 
+      ...(location ? { location } : {})
     });
 
     return newUser.save();
   }
+
 
   async login(dto: LoginDto): Promise<{ token: string }> {
     const user = await this.userModel.findOne({ email: dto.email });
