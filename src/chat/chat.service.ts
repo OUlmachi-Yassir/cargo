@@ -35,4 +35,14 @@ export class ChatService {
       ]
     }).exec();
   }
+
+  async getUserConversations(userId: string): Promise<Conversation[]> {
+    return this.conversationModel
+      .find({
+        $or: [{ senderId: userId }, { receiverId: userId }]
+      })
+      .lean() 
+      .exec();
+  }
+  
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Put, Delete, Body, UseInterceptors, UploadedFile, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Param, Put, Delete, Body, UseInterceptors, UploadedFile, UseGuards, Request, Req } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './model/user.model';
 import { UpdateLocationDto } from './dto/locationDto';
@@ -15,6 +15,11 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async me(@Req() req: any):Promise<User>{
+    return this.userService.findOne(req.user.id);
+  }
   @Get(':id')
   async getUser(@Param('id') id: string): Promise<User> {
     return this.userService.findOne(id);
