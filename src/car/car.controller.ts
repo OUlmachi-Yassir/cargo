@@ -92,6 +92,15 @@ export class CarController {
     return this.carService.addReservation(carId, { ...reservationDto, userId });
   }
 
+  @Get('reservations/my')
+  @UseGuards(JwtAuthGuard)
+  async getMyReservations(@Request() req): Promise<any> {
+    console.log("User ID:", req.user.id); 
+    return this.carService.getUserReservations(req.user.id);
+  }
+
+
+
   @Put(':id/reservations/:reservationId/approve')
   @UseGuards(JwtAuthGuard)
   async approveReservation(

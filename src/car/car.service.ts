@@ -51,6 +51,20 @@ export class CarService {
   async addReservation(carId: string, reservationDto: ReservationDto): Promise<Car> {
     const car = await this.carModel.findById(carId).exec();
     if (!car) throw new NotFoundException('Voiture non trouvée.');
+
+    const hasConflict = car.reservations.some(reservation => 
+      reservation.statut === 'réservé' &&
+      (
+        (new Date(reservationDto.startDate) >= new Date(reservation.startDate) &&
+         new Date(reservationDto.startDate) <= new Date(reservation.endDate)) ||
+        (new Date(reservationDto.endDate) >= new Date(reservation.startDate) &&
+         new Date(reservationDto.endDate) <= new Date(reservation.endDate))
+      )
+    );
+  
+    if (hasConflict) {
+      throw new Error("Cette voiture est déjà réservée pour cette période.");
+    }
   
     car.reservations.push({
       userId: new Types.ObjectId(reservationDto.userId),
@@ -62,6 +76,21 @@ export class CarService {
   
     return car.save();
   }
+
+  async getUserReservations(userId: string): Promise<any> {
+    const cars = await this.carModel
+      .find({ 'reservations.userId': new Types.ObjectId(userId) })
+      .select('reservations carName') 
+      .exec();
+  
+    const userReservations = cars.map(car => ({
+      _id: car._id,
+      reservations: car.reservations.filter(res => res.userId.toString() === userId) 
+    }));
+  
+    return userReservations.filter(car => car.reservations.length > 0); 
+  }
+  
 
   async updateReservationStatus(
     carId: string,
