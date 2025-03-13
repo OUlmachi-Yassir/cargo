@@ -1,22 +1,57 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 @Schema()
-export class Car extends Document {
-  @Prop()
-  marque: string;
+export class Reservation {
+  @Prop({ type: Types.ObjectId, default: () => new Types.ObjectId() }) 
+  _id?: Types.ObjectId;
 
-  @Prop()
-  modele: string;
+  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
+  userId: Types.ObjectId;
 
-  @Prop()
-  images: string[]; 
-
-  @Prop({ required: true, enum: ['non réservé', 'réservé', 'en panne'], default: 'non réservé' })
+  @Prop({ required: true, enum: ['en attente', 'réservé', 'rejeté'], default: 'en attente' })
   statut: string;
 
   @Prop({ required: true })
-  entrepriseId: string; 
+  startDate: Date;
+
+  @Prop({ required: true })
+  endDate: Date;
+
+  @Prop({ default: Date.now })
+  createdAt: Date;
+}
+
+export const ReservationSchema = SchemaFactory.createForClass(Reservation);
+
+@Schema()
+export class Car extends Document {
+  @Prop({ required: true })
+  marque: string;
+
+  @Prop({ required: true })
+  modele: string;
+
+  @Prop()
+  annee: number;
+
+  @Prop()
+  couleur: string;
+
+  @Prop()
+  kilometrage: number;
+
+  @Prop()
+  images: string[];
+
+  @Prop({ required: true, enum: ['bon état', 'en panne'], default: 'bon état' })
+  statut: string;
+
+  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
+  entrepriseId: Types.ObjectId;
+
+  @Prop({ type: [ReservationSchema], default: [] })
+  reservations: Reservation[];
 }
 
 export const CarSchema = SchemaFactory.createForClass(Car);

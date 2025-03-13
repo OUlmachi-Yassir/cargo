@@ -1,16 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Car } from './model/car.model';
-import { CarDto } from './DTO/car.dto';
+import { CarDto, ReservationDto } from './DTO/car.dto';
 import { MinioService } from './../minio/minio.service';
 
 
 @Injectable()
 export class CarService {
-  constructor(@InjectModel(Car.name) private carModel: Model<Car>,
-  private readonly minioService: MinioService,
-) {}
+  constructor(
+    @InjectModel(Car.name) private carModel: Model<Car>,
+    private readonly minioService: MinioService,
+  ) {}
 
   async createCar(dto: CarDto, entrepriseId: string,  images: Express.Multer.File[]): Promise<Car> {
     console.log(dto)
@@ -18,12 +19,11 @@ export class CarService {
   
     const imageUrls = await Promise.all(imagesArray.map((file) => this.minioService.uploadFile(file)));
         const newCar = new this.carModel({
-      marque: dto.marque,
-      modele: dto.modele,
+      ...dto,
       images: imageUrls.flat(),
-      statut: dto.statut || 'non réservé',
-      entrepriseId: entrepriseId,
-    });;
+      entrepriseId: new Types.ObjectId(entrepriseId),
+    });
+
     return newCar.save();
   }
 
@@ -46,5 +46,48 @@ export class CarService {
   async deleteCar(id: string): Promise<void> {
     const result = await this.carModel.findByIdAndDelete(id).exec();
     if (!result) throw new NotFoundException('Voiture non trouvée.');
+  }
+
+  async addReservation(carId: string, reservationDto: ReservationDto): Promise<Car> {
+    const car = await this.carModel.findById(carId).exec();
+    if (!car) throw new NotFoundException('Voiture non trouvée.');
+  
+    car.reservations.push({
+      userId: new Types.ObjectId(reservationDto.userId),
+      startDate: reservationDto.startDate,
+      endDate: reservationDto.endDate,
+      statut: 'en attente',
+      createdAt: new Date(),
+    });
+  
+    return car.save();
+  }
+
+  async updateReservationStatus(
+    carId: string,
+    reservationId: string,
+    statut: 'réservé' | 'rejeté',
+  ): Promise<Car> {
+    const car = await this.carModel.findById(carId).exec();
+    if (!car) throw new NotFoundException('Voiture non trouvée.');
+
+    const reservation = car.reservations.find(
+      (res) => res._id?.toString() === reservationId,
+    );
+    if (!reservation) throw new NotFoundException('Réservation non trouvée.');
+
+    reservation.statut = statut;
+    return car.save();
+  }
+
+  async removeReservation(carId: string, reservationId: string): Promise<Car> {
+    const car = await this.carModel.findById(carId).exec();
+    if (!car) throw new NotFoundException('Voiture non trouvée.');
+
+    car.reservations = car.reservations.filter(
+      (reservation) => reservation._id?.toString() !== reservationId,
+    );
+
+    return car.save();
   }
 }

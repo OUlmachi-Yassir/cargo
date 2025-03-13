@@ -1,11 +1,24 @@
-import { Controller, Post, Get, Put, Delete, Body, Param, UseGuards, Request, UnauthorizedException, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Put,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  UnauthorizedException,
+  UploadedFiles,
+  UseInterceptors,
+  Req,
+} from '@nestjs/common';
 import { CarService } from './car.service';
 import { JwtAuthGuard } from 'src/Middleware/auth/jwt-auth.guard';
-import { CarDto } from './DTO/car.dto';
+import { CarDto, ReservationDto } from './DTO/car.dto';
 import { Car } from './model/car.model';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import * as multer from 'multer';
-
 
 @Controller('cars')
 export class CarController {
@@ -44,7 +57,6 @@ export class CarController {
     const uploadedImageUrls = await this.carService.createCar(dto, req.user.id, images);
     return uploadedImageUrls;
   }
-  
 
   @Get()
   async getAllCars(): Promise<Car[]> {
@@ -67,5 +79,43 @@ export class CarController {
   async deleteCar(@Request() req, @Param('id') id: string): Promise<{ message: string }> {
     await this.carService.deleteCar(id);
     return { message: 'Voiture supprimée.' };
+  }
+
+  @Post(':id/reservations')
+  @UseGuards(JwtAuthGuard)
+  async addReservation(
+    @Request() req, 
+    @Param('id') carId: string,
+    @Body() reservationDto: ReservationDto,
+  ): Promise<Car> {
+    const userId = req.user.id; 
+    return this.carService.addReservation(carId, { ...reservationDto, userId });
+  }
+
+  @Put(':id/reservations/:reservationId/approve')
+  @UseGuards(JwtAuthGuard)
+  async approveReservation(
+    @Param('id') carId: string,
+    @Param('reservationId') reservationId: string,
+  ): Promise<Car> {
+    return this.carService.updateReservationStatus(carId, reservationId, 'réservé');
+  }
+
+  @Put(':id/reservations/:reservationId/reject')
+  @UseGuards(JwtAuthGuard)
+  async rejectReservation(
+    @Param('id') carId: string,
+    @Param('reservationId') reservationId: string,
+  ): Promise<Car> {
+    return this.carService.updateReservationStatus(carId, reservationId, 'rejeté');
+  }
+
+  @Delete(':id/reservations/:reservationId')
+  @UseGuards(JwtAuthGuard)
+  async removeReservation(
+    @Param('id') carId: string,
+    @Param('reservationId') reservationId: string,
+  ): Promise<Car> {
+    return this.carService.removeReservation(carId, reservationId);
   }
 }

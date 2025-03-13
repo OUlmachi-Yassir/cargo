@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Put, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, Param, UseGuards, Request, Req } from '@nestjs/common';
 import { ReservationService } from './reservation.service';
 import { ReservationDto } from './dto/reservation.dto';
 import { JwtAuthGuard } from 'src/Middleware/auth/jwt-auth.guard';
@@ -32,9 +32,10 @@ export class ReservationController {
     return this.reservationService.getAllReservations();
   }
 
-  @Get('user/:userId')
+  @Get('user/')
   @UseGuards(JwtAuthGuard)
-  async getReservationsByUser(@Param('userId') userId: string) {
+  async getReservationsByUser(@Req() req: any) {
+    const userId = req.user.id;
     return this.reservationService.getReservationsByUser(userId);
   }
 }
