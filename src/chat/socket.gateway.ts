@@ -27,6 +27,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     console.log('Message received:', data);
 
-    this.server.emit('receiveMessage', data);
+    this.server.emit('message', data);
   }
 }
