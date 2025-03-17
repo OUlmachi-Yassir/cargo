@@ -11,7 +11,6 @@ import {
   UnauthorizedException,
   UploadedFiles,
   UseInterceptors,
-  Req,
 } from '@nestjs/common';
 import { CarService } from './car.service';
 import { JwtAuthGuard } from 'src/Middleware/auth/jwt-auth.guard';
@@ -63,6 +62,13 @@ export class CarController {
     return this.carService.getAllCars();
   }
 
+  @Get('my')
+  @UseGuards(JwtAuthGuard)
+  async getMyCars(@Request() req): Promise<Car[]> {
+    const entrepriseId = req.user.id; 
+    return this.carService.getMyCars(entrepriseId);
+  }
+
   @Get(':id')
   async getCarById(@Param('id') id: string): Promise<Car> {
     return this.carService.getCarById(id);
@@ -88,6 +94,7 @@ export class CarController {
     @Param('id') carId: string,
     @Body() reservationDto: ReservationDto,
   ): Promise<Car> {
+    
     const userId = req.user.id; 
     return this.carService.addReservation(carId, { ...reservationDto, userId });
   }
@@ -127,4 +134,20 @@ export class CarController {
   ): Promise<Car> {
     return this.carService.removeReservation(carId, reservationId);
   }
+
+
+  @Get('statistics')
+  async getStatistics(): Promise<any> {
+    return this.carService.getStatistics();
+  }
+
+
+  @Get('statistics/my')
+  @UseGuards(JwtAuthGuard)
+  async getMyCarsStatistics(@Request() req): Promise<any> {
+    const entrepriseId = req.user.id; 
+    return this.carService.getMyCarsStatistics(entrepriseId);
+  }
+
+
 }

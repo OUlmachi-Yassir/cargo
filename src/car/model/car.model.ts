@@ -42,6 +42,9 @@ export class Car extends Document {
   kilometrage: number;
 
   @Prop()
+  price: number;
+
+  @Prop()
   images: string[];
 
   @Prop({ required: true, enum: ['bon état', 'en panne'], default: 'bon état' })

@@ -8,9 +8,11 @@ import { JwtAuthGuard } from 'src/Middleware/auth/jwt-auth.guard';
 export class ChatController {
   constructor(private readonly conversationsService: ChatService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
-  async createConversation(@Body() createConversationDto: CreateConversationDto) {
-    return this.conversationsService.createConversation(createConversationDto);
+  async createConversation(@Req() req: any, @Body() {receiverId, text}: CreateConversationDto) {
+    const senderId = req.user.id;
+    return this.conversationsService.createConversation(senderId, receiverId, text);
   }
 
   @Get(':senderId/:receiverId')

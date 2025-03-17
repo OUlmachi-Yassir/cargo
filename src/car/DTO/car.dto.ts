@@ -3,6 +3,7 @@ export class CarDto {
   modele: string;
   annee: number;
   couleur: string;
+  price:number;
   kilometrage: number;
   images: string[];
   statut: string;

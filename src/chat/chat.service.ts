@@ -10,19 +10,28 @@ export class ChatService {
     @InjectModel(Conversation.name) private conversationModel: Model<Conversation>,
   ) {}
 
-  async createConversation(createConversationDto: CreateConversationDto): Promise<Conversation> {
+  async createConversation(senderId : string, receiverId: string, text: string): Promise<Conversation> {
     const existingConversation = await this.conversationModel.findOne({
       $or: [
-        { senderId: createConversationDto.senderId, receiverId: createConversationDto.receiverId },
-        { senderId: createConversationDto.receiverId, receiverId: createConversationDto.senderId }
+        { senderId, receiverId },
+        { senderId: receiverId, receiverId: senderId }
       ]
     }).exec();
-
+    const currentMessage = {
+      sender : senderId,
+      text: text,
+      timestamp: new Date()};
     if (existingConversation) {
-      existingConversation.messages.push(createConversationDto.messages[0]);
+      existingConversation.messages.push(currentMessage);
       return existingConversation.save();  
     } else {
-      const conversation = new this.conversationModel(createConversationDto);
+      const conversation = new this.conversationModel({
+        senderId,
+        receiverId,
+        messages: [
+          {...currentMessage}
+        ]
+      });
       return conversation.save(); 
     }
   }

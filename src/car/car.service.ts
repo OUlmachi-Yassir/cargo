@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Car } from './model/car.model';
@@ -118,5 +118,43 @@ export class CarService {
     );
 
     return car.save();
+  }
+
+
+  async getStatistics(): Promise<any> {
+    const totalCars = await this.carModel.countDocuments().exec();
+    const totalReservations = await this.carModel.aggregate([
+      { $unwind: '$reservations' },
+      { $count: 'totalReservations' }
+    ]).exec();
+  
+    return {
+      totalCars,
+      totalReservations: totalReservations[0]?.totalReservations || 0,
+    };
+  }
+
+
+  async getMyCarsStatistics(entrepriseId: string): Promise<any> {
+    const myCars = await this.carModel.find({ entrepriseId: new Types.ObjectId(entrepriseId) }).exec();
+  
+    const totalCars = myCars.length;
+    const totalReservations = myCars.reduce((acc, car) => acc + car.reservations.length, 0);
+    const pendingReservations = myCars.reduce((acc, car) => acc + car.reservations.filter(res => res.statut === 'en attente').length, 0);
+    const approvedReservations = myCars.reduce((acc, car) => acc + car.reservations.filter(res => res.statut === 'réservé').length, 0);
+    const rejectedReservations = myCars.reduce((acc, car) => acc + car.reservations.filter(res => res.statut === 'rejeté').length, 0);
+  
+    return {
+      totalCars,
+      totalReservations,
+      pendingReservations,
+      approvedReservations,
+      rejectedReservations,
+    };
+  }
+
+  async getMyCars(entrepriseId: string): Promise<Car[]> {
+    
+    return this.carModel.find({ entrepriseId :new Types.ObjectId(entrepriseId) }).exec();
   }
 }

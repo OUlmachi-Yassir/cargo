@@ -61,7 +61,7 @@ export class InscriptionService {
   }
 
   private generateToken(user: User): { token: string } {
-    const token = jwt.sign({ id: user._id, role: user.role }, 'SECRET_KEY', { expiresIn: '1h' });
+    const token = jwt.sign({ id: user._id, role: user.role }, 'SECRET_KEY', { expiresIn: '10h' });
     return { token };
   }
 }
