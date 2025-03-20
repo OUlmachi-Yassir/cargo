@@ -47,13 +47,10 @@ describe('InscriptionController', () => {
         role: 'user',
       };
 
-      // Mock the register method of InscriptionService
       (inscriptionService.register as jest.Mock).mockResolvedValue(user);
 
-      // Call the register endpoint
       const result = await controller.register(dto);
 
-      // Assertions
       expect(result).toEqual(user);
       expect(inscriptionService.register).toHaveBeenCalledWith(dto);
     });
@@ -65,12 +62,10 @@ describe('InscriptionController', () => {
         password: 'password123',
       };
 
-      // Mock the register method to throw BadRequestException
       (inscriptionService.register as jest.Mock).mockRejectedValue(
         new BadRequestException('Email déjà utilisé.'),
       );
 
-      // Call the register endpoint and expect an exception
       await expect(controller.register(dto)).rejects.toThrow(BadRequestException);
       await expect(controller.register(dto)).rejects.toThrow('Email déjà utilisé.');
     });
@@ -85,13 +80,10 @@ describe('InscriptionController', () => {
 
       const tokenResponse = { token: 'jwt-token' };
 
-      // Mock the login method of InscriptionService
       (inscriptionService.login as jest.Mock).mockResolvedValue(tokenResponse);
 
-      // Call the login endpoint
       const result = await controller.login(dto);
 
-      // Assertions
       expect(result).toEqual(tokenResponse);
       expect(inscriptionService.login).toHaveBeenCalledWith(dto);
     });
@@ -102,12 +94,10 @@ describe('InscriptionController', () => {
         password: 'password123',
       };
 
-      // Mock the login method to throw UnauthorizedException
       (inscriptionService.login as jest.Mock).mockRejectedValue(
         new UnauthorizedException('Email ou mot de passe incorrect.'),
       );
 
-      // Call the login endpoint and expect an exception
       await expect(controller.login(dto)).rejects.toThrow(UnauthorizedException);
       await expect(controller.login(dto)).rejects.toThrow('Email ou mot de passe incorrect.');
     });
@@ -118,12 +108,10 @@ describe('InscriptionController', () => {
         password: 'password123',
       };
 
-      // Mock the login method to throw UnauthorizedException
       (inscriptionService.login as jest.Mock).mockRejectedValue(
         new UnauthorizedException('Email ou mot de passe incorrect.'),
       );
 
-      // Call the login endpoint and expect an exception
       await expect(controller.login(dto)).rejects.toThrow(UnauthorizedException);
       await expect(controller.login(dto)).rejects.toThrow('Email ou mot de passe incorrect.');
     });
