@@ -14,23 +14,38 @@ describe('CarService', () => {
 
   const validObjectId = '507f1f77bcf86cd799439011'; 
 
+  const mockModel = function (data) {
+    return {
+      ...data,
+      save: jest.fn().mockResolvedValue({ ...data, images: data.images || [] }),
+    };
+  };
+  mockModel.find = jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue([]),
+  });
+  mockModel.findById = jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue(null),
+  });
+  mockModel.findByIdAndUpdate = jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue(null),
+  });
+  mockModel.findByIdAndDelete = jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue(null),
+  });
+  mockModel.aggregate = jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue([]),
+  });
+  mockModel.countDocuments = jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue(0),
+  });
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CarService,
         {
           provide: getModelToken(Car.name),
-          useValue: {
-            find: jest.fn(),
-            findById: jest.fn(),
-            findByIdAndUpdate: jest.fn(),
-            findByIdAndDelete: jest.fn(),
-            save: jest.fn(),
-            exec: jest.fn(),
-            aggregate: jest.fn(),
-            countDocuments: jest.fn(),
-            constructor: jest.fn(), // Mock the constructor
-          },
+          useValue: mockModel,
         },
         {
           provide: MinioService,
@@ -59,31 +74,29 @@ describe('CarService', () => {
     await expect(service.getCarById('invalidId')).rejects.toThrow(NotFoundException);
   });
 
-  // it('should create a car', async () => {
-  //   const dto: CarDto = {
-  //     marque: 'Toyota',
-  //     modele: 'Corolla',
-  //     annee: 2020,
-  //     couleur: 'Red',
-  //     price: 20000,
-  //     kilometrage: 10000,
-  //     images: [],
-  //     statut: 'bon état',
-  //     entrepriseId: validObjectId,
-  //   };
-  //   const images = [{} as Express.Multer.File];
-  //   const car = { ...dto, images: ['http://example.com/image.jpg'], entrepriseId: new Types.ObjectId(validObjectId) };
-  
-  //   const mockCarInstance = {
-  //     save: jest.fn().mockResolvedValue(car),
-  //   };
-  //   jest.spyOn(model, 'constructor').mockReturnValue(mockCarInstance);
-  
-  //   const result = await service.createCar(dto, validObjectId, images);
-  //   expect(result);
-  //   expect(minioService.uploadFile).toHaveBeenCalledTimes(1);
-  //   expect(mockCarInstance.save).toHaveBeenCalledTimes(1);
-  // });
+  it('should create a car', async () => {
+    const dto: CarDto = {
+      marque: 'Toyota',
+      modele: 'Corolla',
+      annee: 2020,
+      couleur: 'Red',
+      price: 20000,
+      kilometrage: 10000,
+      images: [],
+      statut: 'bon état',
+      entrepriseId: validObjectId,
+    };
+    const images = [{} as Express.Multer.File];
+    const car = {
+      ...dto,
+      images: ['http://example.com/image.jpg'],
+      entrepriseId: new Types.ObjectId(validObjectId),
+    };
+
+    const result = await service.createCar(dto, validObjectId, images);
+    expect(result).toEqual(car);
+    expect(minioService.uploadFile).toHaveBeenCalledTimes(1);
+  });
 
   it('should update a car', async () => {
     const dto: CarDto = {
