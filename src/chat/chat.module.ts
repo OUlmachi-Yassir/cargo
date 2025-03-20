@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ChatService } from './chat.service';
 import { ChatGateway } from './socket.gateway';
-import { NotificationService } from 'src/notification/notification.service';
 import { ChatController } from './chat.controller';
 import { Conversation, ConversationSchema } from './entities/conversation.entity';
 
@@ -10,7 +9,7 @@ import { Conversation, ConversationSchema } from './entities/conversation.entity
   imports: [
     MongooseModule.forFeature([{ name: Conversation.name, schema: ConversationSchema }]),
   ],
-  providers: [ChatService, ChatGateway,NotificationService],
+  providers: [ChatService, ChatGateway],
   controllers: [ChatController],
 
 })

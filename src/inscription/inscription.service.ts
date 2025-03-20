@@ -3,9 +3,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import * as fs from 'fs';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
-import { User } from 'src/user/model/user.model';
+import { User } from '../user/model/user.model';
 import { LoginDto, RegisterDto } from './DTO/auth.dto';
 
 @Injectable()
@@ -19,7 +19,7 @@ export class InscriptionService {
   }
 
   async register(dto: RegisterDto): Promise<User> {
-    const existingUser = await this.userModel.findOne({ email: dto.email }).exec();
+    const existingUser = await this.userModel.findOne({ email: dto.email });
     if (existingUser) {
       throw new BadRequestException('Email déjà utilisé.');
     }
@@ -37,7 +37,7 @@ export class InscriptionService {
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    const newUser = new this.userModel({
+    const newUser = await this.userModel.create({
       name: dto.name,
       email: dto.email,
       password: hashedPassword,
@@ -45,8 +45,8 @@ export class InscriptionService {
       ...(dto.ice ? { ice: dto.ice } : {}), 
       ...(location ? { location } : {})
     });
-
-    return newUser.save();
+    return newUser;
+    
   }
 
 

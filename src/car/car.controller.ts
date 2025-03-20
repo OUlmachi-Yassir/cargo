@@ -13,7 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { CarService } from './car.service';
-import { JwtAuthGuard } from 'src/Middleware/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../Middleware/auth/jwt-auth.guard';
 import { CarDto, ReservationDto } from './DTO/car.dto';
 import { Car } from './model/car.model';
 import { FilesInterceptor } from '@nestjs/platform-express';
