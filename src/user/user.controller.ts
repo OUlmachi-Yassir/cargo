@@ -2,9 +2,9 @@ import { Controller, Get, Param, Put, Delete, Body, UseInterceptors, UploadedFil
 import { UserService } from './user.service';
 import { User } from './model/user.model';
 import { UpdateLocationDto } from './dto/locationDto';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import * as multer from 'multer';
-import { JwtAuthGuard } from 'src/Middleware/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../Middleware/auth/jwt-auth.guard';
 
 @Controller('users')
 export class UserController {
@@ -47,7 +47,7 @@ export class UserController {
 )
 async updateProfileImage(
   @Request() req,
-  @UploadedFile() image: Express.Multer.File, 
+  @UploadedFile() image?: Express.Multer.File, 
 ): Promise<User> {
   if (!image) {
     throw new Error('Aucune image téléchargée.');

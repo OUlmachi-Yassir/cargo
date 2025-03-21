@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './model/user.model';
 import { UpdateLocationDto } from './dto/locationDto';
-import { MinioService } from 'src/minio/minio.service';
+import { MinioService } from '../minio/minio.service';
 
 @Injectable()
 export class UserService {
