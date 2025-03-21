@@ -1,0 +1,73 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main 
+  pull_request:
+    branches:
+      - main  
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16 
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test  
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/backend-app:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build  
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/backend-app:latest
+          docker stop backend-app || true
+          docker rm backend-app || true
+          docker run -d \
+            --name backend-app \
+            --restart unless-stopped \
+            -p 8080:8080 \
+            -e MONGODB_URI=${{ secrets.MONGODB_URI }} \
+            -e MINIO_ENDPOINT=${{ secrets.MINIO_ENDPOINT }} \
+            -e MINIO_PORT=${{ secrets.MINIO_PORT }} \
+            -e MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }} \
+            -e MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }} \
+            -e MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }} \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/backend-app:latest
+          EOF
