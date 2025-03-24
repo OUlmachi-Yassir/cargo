@@ -48,7 +48,7 @@ export class CarService {
     if (!result) throw new NotFoundException('Voiture non trouvée.');
   }
 
-  async addReservation(carId: string, reservationDto: ReservationDto): Promise<Car> {
+  async addReservation(carId: string, reservationDto: ReservationDto): Promise<any> {
     const car = await this.carModel.findById(carId).exec();
     if (!car) throw new NotFoundException('Voiture non trouvée.');
 
@@ -63,7 +63,7 @@ export class CarService {
     );
   
     if (hasConflict) {
-      throw new Error("Cette voiture est déjà réservée pour cette période.");
+      return {success: false, message: "Cette voiture est déjà réservée pour cette période." };
     }
   
     car.reservations.push({
